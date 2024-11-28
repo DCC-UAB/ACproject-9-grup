@@ -1,11 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
-import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, accuracy_score
 
 # Llegir el fitxer CSV
 df = pd.read_csv("student-mat.csv")
@@ -29,35 +27,45 @@ encoder = OrdinalEncoder()
 X_train[cat_cols] = encoder.fit_transform(X_train[cat_cols])
 X_test[cat_cols] = encoder.transform(X_test[cat_cols])
 
-# Aplicar una transformació polinòmica de grau 2
-poly = PolynomialFeatures(degree=2)
-X_train_poly = poly.fit_transform(X_train)
-X_test_poly = poly.transform(X_test)
+# Definir la matriu de distàncies entre les classes (aquí només per 5 classes)
+distance_matrix = np.array([[0, 1, 2, 3, 4], 
+                            [1, 0, 1, 2, 3], 
+                            [2, 1, 0, 1, 2], 
+                            [3, 2, 1, 0, 1], 
+                            [4, 3, 2, 1, 0]])
 
-# Entrenar un model de regressió lineal sobre les dades polinòmiques
-model_poly = LinearRegression()
-model_poly.fit(X_train_poly, Y_train)
+# Crear un diccionari de pesos segons la distància
+# Assignar el pes per distància (els errors més grans tenen més pes)
+weights = {i: {j: distance_matrix[i][j] for j in range(5)} for i in range(5)}
 
-# Predicció en el conjunt de prova
-Y_pred_poly = model_poly.predict(X_test_poly)
+# Funció per calcular els pesos de les classes
+def compute_class_weights(y_true, weights_matrix):
+    class_weights = np.zeros(len(np.unique(y_true)))
+    for i, true_class in enumerate(np.unique(y_true)):
+        weight_sum = 0
+        for pred_class in np.unique(y_true):
+            weight_sum += weights_matrix[true_class-1][pred_class-1]  # Indexa les classes per 0
+        class_weights[true_class-1] = weight_sum
+    return class_weights
 
-# Calcular l'error quadràtic mig (MSE) com a funció de cost
-mse_poly = mean_squared_error(Y_test, Y_pred_poly)
+# Calcular els pesos de les classes basant-se en la matriu de distància
+class_weights = compute_class_weights(Y_train, distance_matrix)
 
-# Imprimir resultats
-print("Coeficients del model polinòmic:", model_poly.coef_)
-print("Intercepte:", model_poly.intercept_)
-print("Error quadràtic mig (MSE):", mse_poly)
+# Crear el model de Random Forest amb pesos de les classes
+model = RandomForestClassifier(n_estimators=100, class_weight='balanced_subsample', random_state=42)
 
-# Gràfica de valors reals vs prediccions (Regressió polinòmica)
-plt.figure(figsize=(8, 6))
-plt.scatter(Y_test, Y_pred_poly, alpha=0.7, color='blue', label='Prediccions Polinòmiques')
-plt.plot([Y_test.min(), Y_test.max()], [Y_test.min(), Y_test.max()], color='red', linestyle='--', label='Línia Ideal')
+# Entrenar el model
+model.fit(X_train, Y_train)
 
-# Configuració de la gràfica
-plt.title('Valors reals vs Prediccions - Regressió Polinòmica', fontsize=14)
-plt.xlabel('Valors reals (Walc)', fontsize=12)
-plt.ylabel('Valors predits (Walc)', fontsize=12)
-plt.legend()
-plt.grid(True)
-plt.show()
+# Fer prediccions sobre el conjunt de test
+y_pred = model.predict(X_test)
+
+# Evaluar el model
+accuracy = accuracy_score(Y_test, y_pred)
+print(f"Accuracy: {accuracy:.4f}")
+
+# Report de classificació per veure les mètriques
+print("\nClassification Report:")
+print(classification_report(Y_test, y_pred))
+
+
