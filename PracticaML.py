@@ -4,6 +4,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Llegir el fitxer CSV
 df = pd.read_csv("student-mat.csv")
@@ -68,4 +71,10 @@ print(f"Accuracy: {accuracy:.4f}")
 print("\nClassification Report:")
 print(classification_report(Y_test, y_pred))
 
-
+cm = confusion_matrix(Y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=[1, 2, 3, 4, 5], yticklabels=[1, 2, 3, 4, 5])
+plt.xlabel('Classe Predicha')
+plt.ylabel('Classe Real')
+plt.title('Matrícula de Confusió')
+plt.show()
