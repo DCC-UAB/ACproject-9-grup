@@ -260,31 +260,40 @@ X = df.drop(columns=['Walc'])
 Y = df['Walc']
 
 # Dividir en conjunt de train i test
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42, stratify=Y)
 
 # Normalitzar les dades
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# Aplicar SMOTE per a oversampling de les classes minoritàries
-smote = SMOTE(sampling_strategy='auto', random_state=42)
+# Revisar la distribució de les classes
+print("Distribució de les classes abans del SMOTE:")
+print(Y_train.value_counts())
+
+# Aplicar SMOTE evitant problemes amb classes minoritàries
+smote = SMOTE(sampling_strategy='not minority', random_state=42)
 X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
+
+# Verificar la nova distribució de les classes
+print("Distribució de les classes després del SMOTE:")
+print(pd.Series(Y_train_res).value_counts())
 
 # Crear el model Random Forest
 model = RandomForestClassifier(random_state=42)
 
 # Definir els paràmetres per a la cerca en graella
 param_grid = {
-    'n_estimators': [100, 200],
-    'max_depth': [10, 20, None],
+    'n_estimators': [50, 100, 150],
+    'max_depth': [5, 10, 15, 20],
     'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 4],
-    'max_features': ['auto', 'sqrt'],
-    'class_weight': ['balanced', None]  # prova 'balanced' si creus que encara hi ha desbalanceig
+    'min_samples_leaf': [1, 2, 3, 5],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'class_weight': ['balanced', None],
+    'bootstrap': [True, False]
 }
 
-# Realitzar la cerca en graella per ajustar millor els hiperparàmetres
+# Realitzar la cerca en graella
 grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, n_jobs=-1, verbose=2, scoring='accuracy')
 grid_search.fit(X_train_res, Y_train_res)
 
@@ -294,18 +303,14 @@ print("Millors paràmetres trobats:", grid_search.best_params_)
 # Entrenar el model amb els millors paràmetres
 best_model = grid_search.best_estimator_
 
-# Realitzar la validació creuada i obtenir els resultats
+# Validació creuada
 fold_accuracies = cross_val_score(best_model, X_train_res, Y_train_res, cv=5, scoring='accuracy')
 
 # Mostrar l'accuracy per a cada fold
 for i, accuracy in enumerate(fold_accuracies, 1):
     print(f"Accuracy del fold {i}: {accuracy:.4f}")
 
-# Mostrar l'accuracy mitjà en Cross-Validation
 print(f"\nAccuracy mitjà en Cross-Validation: {np.mean(fold_accuracies):.4f}")
-
-# Entrenar el millor model amb el conjunt d'entrenament complet
-best_model.fit(X_train_res, Y_train_res)
 
 # Fer les prediccions sobre el conjunt de test
 y_pred = best_model.predict(X_test)
