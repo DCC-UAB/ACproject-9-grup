@@ -11,32 +11,17 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, A
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.model_selection import train_test_split as tts
 from sklearn.preprocessing import StandardScaler  # Para escalar los datos
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import make_scorer
 
 # Cargar los datos
 data = pd.read_csv('student-mat.csv')
 
-# Reducir las variables y centrarse en las relevantes
-cols = ['age', 'address', 'famsize', 'Pstatus', 
-        'Medu', 'Fedu', 'studytime', 'schoolsup',
-        'famsup', 'paid', 'activities', 'internet',
-        'romantic', 'famrel', 'freetime', 'goout',
-        'Dalc', 'Walc', 'traveltime', 'G3']
-data = data[cols]
+# Selección de características más importantes (identificadas previamente)
+selected_features = ['goout', 'age', 'Medu', 'freetime', 'studytime', 'Walc', 'Fedu', 'famrel', 'G3']
 
-# Mapeo de variables categóricas a numéricas
-mapping = {'address': {'U': 0, 'R': 1},
-           'famsize': {'LE3': 0, 'GT3': 1},
-           'Pstatus': {'T': 0, 'A': 1},
-           'schoolsup': {'no': 0, 'yes': 1},
-           'famsup': {'no': 0, 'yes': 1},
-           'paid': {'no': 0, 'yes': 1},
-           'activities': {'no': 0, 'yes': 1},
-           'internet': {'no': 0, 'yes': 1},
-           'romantic': {'no': 0, 'yes': 1}}
-
-# Aplicar el mapeo a las columnas
-for column in list(mapping.keys()):
-    data[column] = data[column].map(mapping[column])
+# Reducir el dataset a las características seleccionadas
+data = data[selected_features]
 
 # Definir las variables predictoras y la variable objetivo
 x = data.drop('G3', axis=1)
@@ -62,17 +47,13 @@ models = {
     'ElasticNet': ElasticNet()
 }
 
-# Entrenar y evaluar los modelos
-for name in models:
-    model = models[name]
-    model.fit(x_train, y_train)
-    prediction = model.predict(x_test)
-    print(f'{name}: {np.round(mae(y_test, prediction), 2)}')
+# Definir una métrica personalizada para la validación cruzada (MAE)
+scorer = make_scorer(mae, greater_is_better=False)
 
-plt.figure(figsize=(10, 6))
-plt.scatter(y_test, prediction, color='blue', edgecolors='k', alpha=0.7)
-plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linewidth=2)
-plt.title('Predicciones vs. Valores reales')
-plt.xlabel('Valores reales (y_test)')
-plt.ylabel('Predicciones')
-plt.show()
+# Evaluar cada modelo usando validación cruzada
+for name, model in models.items():
+    scores = cross_val_score(model, x, y, cv=100, scoring=scorer)  # 5 folds
+    mean_score = -scores.mean()  # Invertimos el signo para que sea MAE positivo
+    std_score = scores.std()
+    print(f"{name}: MAE promedio: {np.round(mean_score, 2)}")
+
