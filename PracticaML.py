@@ -53,6 +53,7 @@ def compute_class_weights(y_true, weights_matrix):
 
 # Calcular els pesos de les classes basant-se en la matriu de distància
 class_weights = compute_class_weights(Y_train, distance_matrix)
+print(class_weights)
 
 # Crear el model de Random Forest amb pesos de les classes
 model = RandomForestClassifier(n_estimators=100, class_weight='balanced_subsample', random_state=42)
