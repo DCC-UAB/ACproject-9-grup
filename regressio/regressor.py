@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.model_selection import cross_val_predict, KFold, cross_validate, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error, precision_score, recall_score, f1_score, confusion_matrix
 import numpy as np

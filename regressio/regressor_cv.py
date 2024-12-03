@@ -1,77 +1,7 @@
 import pandas as pd
-from sklearn.model_selection import cross_val_predict, KFold, cross_validate, train_test_split
+from sklearn.model_selection import cross_val_predict, cross_validate
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error, precision_score, recall_score, f1_score, confusion_matrix
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Llegir el fitxer CSV
-data = pd.read_csv("student-mat.csv")
-
-#Filtratge
-cols = ['school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu', 
-        'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup',
-        'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic', 'famrel', 
-        'freetime', 'goout', 'Walc', 'health', 'absences', 'G1', 'G2', 'G3']
-
-data = data[cols]
-
-print("Valors null?",data.isna().any().any())
-
-mapping = {'school': {'GP':0, 'MS':1},
-           'sex': {'F':0, 'M':1},
-           'address': {'U':0, 'R':1},
-           'famsize': {'LE3':0, 'GT3':1},
-           'Pstatus': {'T':0, 'A':1},
-           'schoolsup':{'no':0,'yes':1},
-           'famsup':{'no':0,'yes':1},
-           'paid':{'no':0,'yes':1},
-           'activities':{'no':0,'yes':1},
-           'nursery': {'no':0, 'yes': 1},
-           'higher': {'no':0, 'yes':1},
-           'internet':{'no':0,'yes':1},
-           'romantic':{'no':0,'yes':1}}
-
-for column in list(mapping.keys()):
-    data[column] = data[column].map(mapping[column])
-    
-data['G1'] = data['G1'].str.replace("'", "").astype(float).astype(int)
-
-# Funció per classificar els diferents valors predits pel regressor
-def assign_class(y_pred):
-    if y_pred <= 1.5:
-        return 1
-    elif y_pred <= 2.5:
-        return 2
-    elif y_pred <= 3.5:
-        return 3
-    elif y_pred <= 4.5:
-        return 4
-    else:
-        return 5
-
-# Dividim les dades en X i y
-X = data.drop(columns=["Walc"])
-y = data["Walc"]
-
-# Model de regressió lineal
-model = LinearRegression()
-
-# Validació creuada i obtenir prediccions per cada fold
-#y_pred = cross_val_predict(model, X, y, cv=50)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-model.fit(X_train, y_train)
-
-train_predict = model.predict(X_train)
-y_pred = model.predict(X_test)
-
-print("Metriques regressor:")
-
-import pandas as pd
-from sklearn.model_selection import cross_val_predict, KFold, cross_validate, train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -85,6 +15,8 @@ cols = ['school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu',
         'freetime', 'goout', 'Walc', 'health', 'absences', 'G1', 'G2', 'G3']
 
 data = data[cols]
+
+print("Valors null?",data.isna().any().any())
 
 # Mapeig de variables categòriques
 mapping = {'school': {'GP': 0, 'MS': 1},
@@ -105,6 +37,19 @@ for column in list(mapping.keys()):
     data[column] = data[column].map(mapping[column])
     
 data['G1'] = data['G1'].str.replace("'", "").astype(float).astype(int)
+
+# Funció per classificar els diferents valors predits pel regressor
+def assign_class(y_pred):
+    if y_pred <= 1.5:
+        return 1
+    elif y_pred <= 2.5:
+        return 2
+    elif y_pred <= 3.5:
+        return 3
+    elif y_pred <= 4.5:
+        return 4
+    else:
+        return 5
 
 # Dividim les dades en X i y
 X = data.drop(columns=["Walc"])
@@ -136,8 +81,9 @@ for i in range(kf):
 
 # Mostrar els resultats
 print(f"MSE scores for each fold: {mse_scores}")
-print()
+print(f"Average MSE: {np.mean(mse_scores)}")
 print(f"MAE scores for each fold: {mae_scores}")
+print(f"Average MAE: {np.mean(mae_scores)}")
 
 
 # Crear gràfica per visualitzar les mètriques MSE i MAE
