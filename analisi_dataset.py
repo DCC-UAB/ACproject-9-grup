@@ -1,9 +1,5 @@
-import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, accuracy_score
-from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -29,7 +25,7 @@ ax.grid(axis='y', linestyle='--', alpha=0.7)
 
 # Mostrar el gràfic
 plt.tight_layout()
-#plt.show()
+plt.show()
 
 
 
@@ -53,6 +49,18 @@ mapping = {'address': {'U':0, 'R':1},
 
 for column in list(mapping.keys()):
     data[column] = data[column].map(mapping[column])
+    
+print("Valors null?",data.isna().any().any())
+
+count = {}
+# Recorrem la columna "Walc" de cada fila
+for value in data['Walc']:
+    if value in count:
+        count[value] += 1
+    else:
+        count[value] = 1
+
+print("Valors de l'objectiu (Walc):",count)
     
 
 
