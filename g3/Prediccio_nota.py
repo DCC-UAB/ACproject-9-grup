@@ -60,7 +60,7 @@ X = df.drop('nota', axis=1)
 y = df['nota']
 
 # Dividir entrenament i prova
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, random_state=SEED)
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85, random_state=SEED)
 
 # Escalar dades
 scaler = StandardScaler()
