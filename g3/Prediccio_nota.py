@@ -10,63 +10,69 @@ from sklearn.ensemble import RandomForestRegressor as RF, GradientBoostingRegres
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, confusion_matrix, ConfusionMatrixDisplay, classification_report, accuracy_score
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-
+from imblearn.over_sampling import SMOTE
+from sklearn.utils.class_weight import compute_class_weight
 
 # Semilla
 SEED = 1
 
-# Carregar dades
-df = pd.read_csv('student-mat.csv')
+def cargar_y_preprocesar_datos(filepath):
+    # Carregar dades
+    df = pd.read_csv(filepath)
 
-# Netejar valors no desitjats
-for col in df.columns:
-    if df[col].dtype == 'object':
-        df[col] = df[col].str.replace("'", "").str.strip()
+    # Netejar valors no desitjats
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            df[col] = df[col].str.replace("'", "").str.strip()
 
-# Renombrar columnes per simplicitat
-df.rename(columns={
-    'absences': 'absències',
-    'failures': 'fracassos',
-    'goout': 'sortides',
-    'freetime': 'temps',
-    'age': 'edat',
-    'health': 'salut',
-    'G3': 'nota'
-}, inplace=True)
+    # Renombrar columnes per simplicitat
+    df.rename(columns={
+        'absences': 'absències',
+        'failures': 'fracassos',
+        'goout': 'sortides',
+        'freetime': 'temps',
+        'age': 'edat',
+        'health': 'salut',
+        'G3': 'nota'
+    }, inplace=True)
 
-# Mapatge per valors binaris
-bin_map = {
-    'yes': 1, 'no': 0,
-    'GP': 1, 'MS': 0,
-    'F': 1, 'M': 0,
-    'U': 1, 'R': 0,
-    'LE3': 0, 'GT3': 1,
-    'T': 1, 'A': 0
-}
+    # Mapatge per valors binaris
+    bin_map = {
+        'yes': 1, 'no': 0,
+        'GP': 1, 'MS': 0,
+        'F': 1, 'M': 0,
+        'U': 1, 'R': 0,
+        'LE3': 0, 'GT3': 1,
+        'T': 1, 'A': 0
+    }
 
-cat_cols = ['school', 'sex', 'address', 'famsize', 'Pstatus', 'Mjob', 'Fjob', 'reason', 'guardian',
-            'schoolsup', 'famsup', 'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic']
+    cat_cols = ['school', 'sex', 'address', 'famsize', 'Pstatus', 'Mjob', 'Fjob', 'reason', 'guardian',
+                'schoolsup', 'famsup', 'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic']
 
-# Codificar columnes categòriques
-for col in cat_cols:
-    if df[col].dtype == 'object':
-        if set(df[col].unique()).issubset(bin_map.keys()):
-            df[col] = df[col].map(bin_map)
-        else:
-            df[col] = LabelEncoder().fit_transform(df[col])
+    # Codificar columnes categòriques
+    for col in cat_cols:
+        if df[col].dtype == 'object':
+            if set(df[col].unique()).issubset(bin_map.keys()):
+                df[col] = df[col].map(bin_map)
+            else:
+                df[col] = LabelEncoder().fit_transform(df[col])
 
-# Separar variables (X: predictives, y: objectiu)
-X = df.drop('nota', axis=1)
-y = df['nota']
+    # Separar variables (X: predictives, y: objectiu)
+    X = df.drop('nota', axis=1)
+    y = df['nota']
 
-# Dividir entrenament i prova
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85, random_state=SEED)
+    # Dividir entrenament i prova
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85, random_state=1)
 
-# Escalar dades
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+    # Escalar dades
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = cargar_y_preprocesar_datos('student-mat.csv')
+                                                              
 # Definir models
 models = {
     'KNN': KNN(),
@@ -143,43 +149,3 @@ plt.ylabel('Nota', fontsize=12)
 plt.legend(fontsize=12)
 plt.tight_layout()
 plt.show()
-
-# Funció per classificar les notes
-def classificar_nota(nota):
-    if nota >= 17.5:
-        return 'Excel·lent'
-    elif nota >= 15.5:
-        return 'Molt Bé'
-    elif nota >= 13.5:
-        return 'Bé'
-    elif nota >= 9.5:
-        return 'Suficient'
-    elif nota >= 3.5:
-        return 'Feble'
-    else:
-        return 'Pobre'
-
-# Classificar valors reals i prediccions
-y_real_class = y_test.apply(classificar_nota)  # Categories reals
-y_pred_class = pd.Series(models['Random Forest'].predict(X_test)).apply(classificar_nota)  # Prediccions (Random Forest)
-
-# Generar la matriu de confusió
-cm = confusion_matrix(y_real_class, y_pred_class, labels=['Excel·lent', 'Molt Bé', 'Bé', 'Suficient', 'Feble', 'Pobre'])
-
-# Mostrar la matriu de confusió
-disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Excel·lent', 'Molt Bé', 'Bé', 'Suficient', 'Feble', 'Pobre'])
-disp.plot(cmap='Blues', xticks_rotation='vertical')
-plt.title("Matriu de Confusió: Categories de Qualificació")
-plt.show()
-
-# Mètriques d'avaluació
-report = classification_report(y_real_class, y_pred_class, target_names=['Excel·lent', 'Molt Bé', 'Bé', 'Suficient', 'Feble', 'Pobre'])
-
-# Mostrar les mètriques
-print("\nInforme de Classificació:")
-print(report)
-
-print("\nInforme de Classificació:")
-
-category_counts = y_real_class.value_counts()
-print(category_counts)
