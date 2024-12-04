@@ -180,3 +180,6 @@ print("\nInforme de Classificació:")
 print(report)
 
 print("\nInforme de Classificació:")
+
+category_counts = y_real_class.value_counts()
+print(category_counts)
