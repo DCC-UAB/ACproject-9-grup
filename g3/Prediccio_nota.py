@@ -69,7 +69,7 @@ def cargar_y_preprocesar_datos(filepath):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    return X_train, X_test, y_train, y_test
+    return X,X_train, X_test, y_train, y_test
 
 X_train, X_test, y_train, y_test = cargar_y_preprocesar_datos('student-mat.csv')
                                                               
@@ -77,8 +77,6 @@ X_train, X_test, y_train, y_test = cargar_y_preprocesar_datos('student-mat.csv')
 models = {
     'KNN': KNN(),
     'DT': DT(),
-    'Lasso': Lasso(),
-    'Ridge': Ridge(),
     'ElasticNet': ElasticNet(),
     'SVR': SVR(),
     'Random Forest': RF(random_state=SEED),
@@ -92,8 +90,6 @@ models = {
 params = {
     'KNN': {'n_neighbors': [i for i in range(3, 50)]},
     'DT': {'max_depth': [i for i in range(1, 25)]},
-    'Lasso': {'alpha': [i for i in range(0, 50)], 'tol': [0.1, 0.01, 0.001]},
-    'Ridge': {'alpha': [i for i in range(0, 50)], 'tol': [0.1, 0.01, 0.001]},
     'ElasticNet': {'alpha': [i for i in range(0, 50)], 'l1_ratio': [0.1, 0.5, 0.9]},
     'SVR': {'kernel': ['linear', 'poly', 'rbf'], 'C': [i for i in range(1, 101)], 'epsilon': [0.01, 0.1]},
     'Random Forest': {'n_estimators': [50, 100, 150], 'max_depth': [10, 20, 30], 'max_features': [0.3, 0.5, 0.7]},
@@ -139,13 +135,25 @@ plt.show()
 # Prediccions amb Random Forest
 y_pred_rf = models['Random Forest'].predict(X_test)
 
-# Gràfic de valors reals i prediccions
-plt.figure(figsize=(12, 6))
-plt.scatter(range(len(y_test)), y_test, color='blue', alpha=0.7, label='Valors Reals', marker='o')
-plt.scatter(range(len(y_pred_rf)), y_pred_rf, color='orange', alpha=0.7, label='Prediccions', marker='x')
-plt.title('Valors Reals vs Prediccions (Random Forest)', fontsize=16)
-plt.xlabel('Índex', fontsize=12)
-plt.ylabel('Nota', fontsize=12)
-plt.legend(fontsize=12)
+# Importància de les característiques en Random Forest
+importances = models['Random Forest'].feature_importances_
+feature_importance_df = pd.DataFrame({
+    'Feature': X.columns,
+    'Importance': importances
+}).sort_values(by='Importance', ascending=False)
+
+# Mostrar importància de les característiques
+plt.figure(figsize=(10, 6))
+plt.bar(feature_importance_df['Feature'], feature_importance_df['Importance'], color='skyblue')
+plt.title("Importància de les Característiques (Random Forest)")
+plt.xticks(rotation=90)
 plt.tight_layout()
+plt.show()
+
+# Visualización de predicciones vs valores reales
+plt.scatter(y_test, y_pred, alpha=0.7)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--')  # Línea ideal
+plt.xlabel("Actual Values")
+plt.ylabel("Predicted Values")
+plt.title("Actual vs. Predicted Values")
 plt.show()
