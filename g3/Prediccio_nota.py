@@ -7,7 +7,7 @@ from sklearn.tree import DecisionTreeRegressor as DT
 from sklearn.linear_model import Lasso, Ridge, ElasticNet
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor as RF, GradientBoostingRegressor as GB, AdaBoostRegressor as AB
-from sklearn.metrics import mean_absolute_error as MAE
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 
@@ -91,39 +91,43 @@ for model in models.keys():
     models[model] = cval[model].best_estimator_
     best_params[model] = cval[model].best_params_
 
-# Evaluar modelos
-errors = {}
+# Evaluar métricas para cada modelo
+metrics = {}
 predictions = {}
 for model in models.keys():
     y_pred = models[model].predict(x_test)
     predictions[model] = y_pred
-    errors[model] = MAE(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
+    r2 = r2_score(y_test, y_pred)
+    metrics[model] = {'MAE': mae, 'MSE': mse, 'RMSE': rmse, 'R²': r2}
 
-# Ordenar modelos por menor MAE
-sorted_errors = sorted(errors.items(), key=lambda x: x[1])
+# Convertir métricas en DataFrame y ordenarlas por MAE
+metrics_df = pd.DataFrame(metrics).T.sort_values('MAE', ascending=True)
+print("\nMétricas para cada modelo:")
+print(metrics_df)
 
 # Gráfico de MAE para todos los modelos
 plt.figure(figsize=(10, 6))
-mae_series = pd.Series(errors).sort_values()
+mae_series = metrics_df['MAE']
 bars = mae_series.plot(kind='barh', color=sns.color_palette("husl", len(mae_series)), edgecolor='black')
 plt.title("Mean Absolute Error (MAE) por Modelo")
 plt.xlabel("MAE")
 plt.ylabel("Modelos")
-for bar in bars.containers:
-    bars.bar_label(bar, fmt='%.2f')
+for i, v in enumerate(mae_series):
+    plt.text(v + 0.1, i, f"{v:.2f}", va='center')
 plt.show()
 
-# Visualización con subplots
-fig, axes = plt.subplots(2, 1, figsize=(20, 18))
-
-# Gráfico para el modelo SVR
-axes[0].scatter(range(len(y_test)), y_test, label='Datos Reales', marker='x', color='red')
-axes[0].scatter(range(len(y_test)), predictions['AdaBoost'], label='Predicciones (ADA)', marker='o', color='blue')
-axes[0].set_title('Predicciones vs Valores Reales (ADA')
-axes[0].legend()
-axes[0].set_xlabel('Índice')
-axes[0].set_ylabel('Valores')
-
-plt.tight_layout()
+# Gráfico de Predicciones vs Reales para el mejor modelo (según MAE)
+best_model = metrics_df.index[0]
+y_pred_best = predictions[best_model]
+plt.figure(figsize=(10, 6))
+plt.scatter(range(len(y_test)), y_test, label='Datos Reales', marker='x', color='red')
+plt.scatter(range(len(y_test)), y_pred_best, label=f'Predicciones ({best_model})', marker='o', color='blue')
+plt.title(f'Predicciones vs Valores Reales ({best_model})')
+plt.legend()
+plt.xlabel('Índice')
+plt.ylabel('Valores')
 plt.show()
 
