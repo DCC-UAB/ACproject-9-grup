@@ -9,7 +9,7 @@ from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor as RF, GradientBoostingRegressor as GB, AdaBoostRegressor as AB
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 # Semilla para reproducibilidad
 SEED = 1
@@ -17,7 +17,12 @@ SEED = 1
 # Cargar los datos
 data = pd.read_csv('student-mat.csv')
 
-# Renombrar las variables a catalán
+# Limpieza de columnas con caracteres no deseados (si aplica)
+for col in data.columns:
+    if data[col].dtype == 'object':
+        data[col] = data[col].str.replace("'", "").str.strip()
+
+# Renombrar variables categóricas y binarias para mayor comprensión
 data.rename(columns={
     'absences': 'absències',
     'failures': 'fracassos',
@@ -28,22 +33,32 @@ data.rename(columns={
     'G3': 'nota_final'
 }, inplace=True)
 
-# Selección de características más importantes
-selected_features = [
-    "absències",
-    "fracassos",
-    "sortides",
-    "temps_lliure",
-    "edat",
-    "salut",
-    "nota_final"
-]
+# Codificar variables categóricas y binarias
+categorical_columns = ['school', 'sex', 'address', 'famsize', 'Pstatus', 'Mjob', 'Fjob', 'reason', 'guardian',
+                       'schoolsup', 'famsup', 'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic']
 
-# Reducir el dataset a las características seleccionadas
-data = data[selected_features]
+binary_map = {
+    'yes': 1, 'no': 0,
+    'GP': 1, 'MS': 0,
+    'F': 1, 'M': 0,
+    'U': 1, 'R': 0,
+    'LE3': 0, 'GT3': 1,
+    'T': 1, 'A': 0
+}
 
-# Definir las variables predictoras y la variable objetivo
-x = data.drop('nota_final', axis=1)
+for col in categorical_columns:
+    if data[col].dtype == 'object':
+        if set(data[col].unique()).issubset(binary_map.keys()):
+            data[col] = data[col].map(binary_map)
+        else:
+            data[col] = LabelEncoder().fit_transform(data[col])
+
+# Seleccionar todas las variables disponibles
+selected_features = list(data.columns)
+selected_features.remove('nota_final')
+
+# Separar las características predictoras y la variable objetivo
+x = data[selected_features]
 y = data['nota_final']
 
 # Dividir los datos en entrenamiento y prueba
