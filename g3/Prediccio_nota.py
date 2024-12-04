@@ -18,7 +18,15 @@ from sklearn.metrics import make_scorer
 data = pd.read_csv('student-mat.csv')
 
 # Selección de características más importantes (identificadas previamente)
-selected_features = ['goout', 'age', 'Medu', 'freetime', 'studytime', 'Walc', 'Fedu', 'famrel', 'G3']
+selected_features = [
+    "absences",
+    "failures",
+    "goout",
+    "freetime",
+    "age",
+    "health",
+    "G3"
+]
 
 # Reducir el dataset a las características seleccionadas
 data = data[selected_features]
