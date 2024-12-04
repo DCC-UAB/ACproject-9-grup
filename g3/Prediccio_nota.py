@@ -71,7 +71,7 @@ def cargar_y_preprocesar_datos(filepath):
 
     return X,X_train, X_test, y_train, y_test
 
-X_train, X_test, y_train, y_test = cargar_y_preprocesar_datos('student-mat.csv')
+X, X_train, X_test, y_train, y_test = cargar_y_preprocesar_datos('student-mat.csv')
                                                               
 # Definir models
 models = {
@@ -142,9 +142,12 @@ feature_importance_df = pd.DataFrame({
     'Importance': importances
 }).sort_values(by='Importance', ascending=False)
 
-# Mostrar importància de les característiques
+# Filtrar características para eliminar 'G1' y 'G2'
+filtered_feature_importance_df = feature_importance_df[~feature_importance_df['Feature'].isin(['G1', 'G2'])]
+
+# Mostrar importància de les característiques sense 'G1' i 'G2'
 plt.figure(figsize=(10, 6))
-plt.bar(feature_importance_df['Feature'], feature_importance_df['Importance'], color='skyblue')
+plt.bar(filtered_feature_importance_df['Feature'], filtered_feature_importance_df['Importance'], color='skyblue')
 plt.title("Importància de les Característiques (Random Forest)")
 plt.xticks(rotation=90)
 plt.tight_layout()
