@@ -1,21 +1,21 @@
-"""
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from imblearn.over_sampling import SMOTE
 import seaborn as sns
 import matplotlib.pyplot as plt
-import xgboost as xgb
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
-from sklearn.utils import class_weight
+from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
 
 # Llegir el fitxer CSV
 df = pd.read_csv("student-mat.csv")
 
-# Filtratge de columnes
+# Filtratge de les columnes necessàries
 cols = ['school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu', 
-        'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup',
-        'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic', 'famrel', 
-        'freetime', 'goout', 'Walc', 'health', 'absences', 'G1', 'G2', 'G3']
+        'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup', 
+        'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic', 
+        'famrel', 'freetime', 'goout', 'Walc', 'health', 'absences', 'G1', 'G2', 'G3']
 df = df[cols]
 
 # Mapeig de les columnes categòriques
@@ -43,45 +43,56 @@ for column in mapping:
 X = df.drop(columns=['Walc'])
 Y = df['Walc']
 
+# Modificar les classes per començar en 0 (en comptes de 1-5, seran 0-4)
+Y = Y - 1
+
 # Dividir en conjunt de train i test
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42, stratify=Y)
 
-# Reindexar les classes per començar des de 0
-Y_train = Y_train - Y_train.min()
-Y_test = Y_test - Y_test.min()
+# Aplicar SMOTE per a classes desbalancejades
+smote = SMOTE(sampling_strategy='not minority', random_state=42)
+X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
 
-# Calcular els pesos de les classes manualment
-class_counts = Y_train.value_counts()
-total_samples = len(Y_train)
+# Definir l'escala del model
+scaler = StandardScaler()
+X_train_res = scaler.fit_transform(X_train_res)
+X_test = scaler.transform(X_test)
 
-# Calcular els pesos inversament proporcionals a la freqüència
-class_weights_manual = {cls: total_samples / count for cls, count in class_counts.items()}
+# Definir el model XGBoost
+model = XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='mlogloss')
 
-# Calcular el valor per scale_pos_weight per a XGBoost
-scale_pos_weight = class_weights_manual.get(2, 1) / class_weights_manual.get(1, 1) if 1 in class_weights_manual and 2 in class_weights_manual else 1
+# Definir els paràmetres per a la cerca en graella
+param_grid = {
+    'n_estimators': [50, 100, 150],
+    'max_depth': [5, 10, 15, 20],
+    'learning_rate': [0.01, 0.1, 0.3],
+    'subsample': [0.8, 0.9, 1.0],
+    'colsample_bytree': [0.8, 0.9, 1.0],
+    'gamma': [0, 0.1, 0.2],
+    'reg_alpha': [0, 0.1, 0.5],
+    'reg_lambda': [1, 1.5, 2]
+}
 
-# Crear el model XGBoost amb scale_pos_weight i altres hiperparàmetres
-model = xgb.XGBClassifier(n_estimators=100, max_depth=6, learning_rate=0.1, 
-                          scale_pos_weight=scale_pos_weight, random_state=42)
+# Realitzar la cerca en graella
+grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, n_jobs=-1, verbose=2, scoring='accuracy')
+grid_search.fit(X_train_res, Y_train_res)
 
-# Validació creuada estratificada
-cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+# Mostrar els millors paràmetres trobats
+print("Millors paràmetres trobats:", grid_search.best_params_)
 
-# Realitzar la validació creuada
-fold_accuracies = cross_val_score(model, X_train, Y_train, cv=cv, scoring='accuracy')
+# Entrenar el model amb els millors paràmetres
+best_model = grid_search.best_estimator_
 
-# Mostrar l'accuracy per a cada "fold"
+# Validació creuada
+fold_accuracies = cross_val_score(best_model, X_train_res, Y_train_res, cv=5, scoring='accuracy')
+
+# Mostrar l'accuracy per a cada fold
 for i, accuracy in enumerate(fold_accuracies, 1):
     print(f"Accuracy del fold {i}: {accuracy:.4f}")
-
-# Mostrar l'accuracy mitjà en Cross-Validation
 print(f"\nAccuracy mitjà en Cross-Validation: {np.mean(fold_accuracies):.4f}")
 
-# Entrenar el model amb el conjunt d'entrenament complet
-model.fit(X_train, Y_train)
-
 # Fer les prediccions sobre el conjunt de test
-y_pred = model.predict(X_test)
+y_pred = best_model.predict(X_test)
 
 # Mostrar l'accuracy en el conjunt de test
 test_accuracy = accuracy_score(Y_test, y_pred)
@@ -99,7 +110,8 @@ plt.xlabel('Classe Predicha')
 plt.ylabel('Classe Real')
 plt.title('Matriu de Confusió')
 plt.show()
-"""
+
+
 
 """"
 import numpy as np
@@ -213,24 +225,24 @@ plt.title('Matriu de Confusió')
 plt.show()
 
 """
+
+""""
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold, GridSearchCV
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
-from sklearn.utils import class_weight
 from imblearn.over_sampling import SMOTE
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
 
 # Llegir el fitxer CSV
 df = pd.read_csv("student-mat.csv")
 
 # Filtratge de columnes
 cols = ['school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu', 
-        'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup',
-        'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic', 'famrel', 
+        'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup', 'paid', 
+        'activities', 'nursery', 'higher', 'internet', 'romantic', 'famrel', 
         'freetime', 'goout', 'Walc', 'health', 'absences', 'G1', 'G2', 'G3']
 df = df[cols]
 
@@ -262,58 +274,38 @@ Y = df['Walc']
 # Dividir en conjunt de train i test
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42, stratify=Y)
 
-# Normalitzar les dades
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
-
-# Revisar la distribució de les classes
-print("Distribució de les classes abans del SMOTE:")
-print(Y_train.value_counts())
-
-# Aplicar SMOTE evitant problemes amb classes minoritàries
-smote = SMOTE(sampling_strategy='not minority', random_state=42)
+# Aplicar SMOTE per a l'oversampling de les classes minoritàries
+smote = SMOTE(sampling_strategy='all', random_state=42)
 X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
 
-# Verificar la nova distribució de les classes
-print("Distribució de les classes després del SMOTE:")
-print(pd.Series(Y_train_res).value_counts())
-
-# Crear el model Random Forest
-model = RandomForestClassifier(random_state=42)
-
-# Definir els paràmetres per a la cerca en graella
-param_grid = {
-    'n_estimators': [50, 100, 150],
-    'max_depth': [5, 10, 15, 20],
-    'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 3, 5],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'class_weight': ['balanced', None],
-    'bootstrap': [True, False]
+# Crear el model Random Forest amb els millors hiperparàmetres trobats
+best_params = {
+    'bootstrap': False,
+    'class_weight': 'balanced',
+    'max_depth': 20,
+    'max_features': 'log2',
+    'min_samples_leaf': 1,
+    'min_samples_split': 2,
+    'n_estimators': 100
 }
 
-# Realitzar la cerca en graella
-grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, n_jobs=-1, verbose=2, scoring='accuracy')
-grid_search.fit(X_train_res, Y_train_res)
+model = RandomForestClassifier(random_state=42, **best_params)
 
-# Mostrar els millors paràmetres trobats
-print("Millors paràmetres trobats:", grid_search.best_params_)
-
-# Entrenar el model amb els millors paràmetres
-best_model = grid_search.best_estimator_
-
-# Validació creuada
-fold_accuracies = cross_val_score(best_model, X_train_res, Y_train_res, cv=5, scoring='accuracy')
+# Realitzar cross-validation utilitzant cross_val_score
+cv_scores = cross_val_score(model, X_train_res, Y_train_res, cv=5, scoring='accuracy')
 
 # Mostrar l'accuracy per a cada fold
-for i, accuracy in enumerate(fold_accuracies, 1):
-    print(f"Accuracy del fold {i}: {accuracy:.4f}")
+for i, score in enumerate(cv_scores, 1):
+    print(f"Accuracy del fold {i}: {score:.4f}")
 
-print(f"\nAccuracy mitjà en Cross-Validation: {np.mean(fold_accuracies):.4f}")
+# Mostrar l'accuracy mitjà de la validació creuada
+print(f"\nAccuracy mitjà en Cross-Validation: {np.mean(cv_scores):.4f}")
+
+# Entrenar el model amb el conjunt de train complet
+model.fit(X_train_res, Y_train_res)
 
 # Fer les prediccions sobre el conjunt de test
-y_pred = best_model.predict(X_test)
+y_pred = model.predict(X_test)
 
 # Mostrar l'accuracy en el conjunt de test
 test_accuracy = accuracy_score(Y_test, y_pred)
@@ -331,3 +323,5 @@ plt.xlabel('Classe Predicha')
 plt.ylabel('Classe Real')
 plt.title('Matriu de Confusió')
 plt.show()
+
+"""
