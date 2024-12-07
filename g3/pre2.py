@@ -12,21 +12,20 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from imblearn.over_sampling import SMOTE
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.preprocessing import PowerTransformer
 
 # Semilla
 SEED = 1
 
 def cargar_y_preprocesar_datos(filepath):
-    # Carregar dades
+    # Cargar datos
     df = pd.read_csv(filepath)
 
-    # Netejar valors no desitjats
+    # Limpiar valores no deseados
     for col in df.columns:
         if df[col].dtype == 'object':
             df[col] = df[col].str.replace("'", "").str.strip()
 
-    # Renombrar columnes per simplicitat
+    # Renombrar columnas
     df.rename(columns={
         'absences': 'absències',
         'failures': 'fracassos',
@@ -37,7 +36,7 @@ def cargar_y_preprocesar_datos(filepath):
         'G3': 'nota'
     }, inplace=True)
 
-    # Mapatge per valors binaris
+    # Mapeo binario
     bin_map = {
         'yes': 1, 'no': 0,
         'GP': 1, 'MS': 0,
@@ -46,11 +45,10 @@ def cargar_y_preprocesar_datos(filepath):
         'LE3': 0, 'GT3': 1,
         'T': 1, 'A': 0
     }
-
     cat_cols = ['school', 'sex', 'address', 'famsize', 'Pstatus', 'Mjob', 'Fjob', 'reason', 'guardian',
                 'schoolsup', 'famsup', 'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic']
 
-    # Codificar columnes categòriques
+    # Codificar columnas categóricas
     for col in cat_cols:
         if df[col].dtype == 'object':
             if set(df[col].unique()).issubset(bin_map.keys()):
@@ -58,45 +56,28 @@ def cargar_y_preprocesar_datos(filepath):
             else:
                 df[col] = LabelEncoder().fit_transform(df[col])
 
-        # Identificar columnas relevantes para transformación
-    outlier_cols = ['absències', 'fracassos', 'studytime', 'famrel', 'Dalc', 'Walc']
+    # Crear una copia del DataFrame para añadir variables derivadas
+    df_local = df.copy()
 
-    # Transformación logarítmica para columnas específicas
-    log_transform_vars = ['absències', 'Dalc', 'Walc']
-    for col in log_transform_vars:
-        df[col] = np.log1p(df[col])  # log1p para manejar ceros
+    # Variables derivadas
+    df_local['Medu_plus_Fedu'] = df_local['Medu'] + df_local['Fedu']
+    df_local['Medu_x_Fedu'] = df_local['Medu'] * df_local['Fedu']
+    df_local['fracassos_div_absències'] = df_local['fracassos'] / (df_local['absències'] + 1)
 
-    # Clip de valores extremos para otras columnas
-    clip_transform_vars = [col for col in outlier_cols if col not in log_transform_vars]
-    for col in clip_transform_vars:
-        Q1 = df[col].quantile(0.25)
-        Q3 = df[col].quantile(0.75)
-        IQR = Q3 - Q1
-        lower_bound = Q1 - 1.5 * IQR
-        upper_bound = Q3 + 1.5 * IQR
-        df[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
+    # Separar variables predictoras y objetivo
+    X = df_local.drop('nota', axis=1)
+    y = df_local['nota']
 
-    # Normalización Yeo-Johnson para todo el conjunto de datos numérico
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-    power_transformer = PowerTransformer(method='yeo-johnson', standardize=True)
-    df[numeric_cols] = power_transformer.fit_transform(df[numeric_cols])
-
-
-    # Separar variables (X: predictives, y: objectiu)
-    X = df.drop('nota', axis=1)
-    y = df['nota']
-
-    # Dividir entrenament i prova
+    # Dividir entrenamiento y prueba
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.85, random_state=1)
 
-    # Escalar dades
+    # Escalar datos
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    return X,X_train, X_test, y_train, y_test
+    return X, X_train, X_test, y_train, y_test
 
-X, X_train, X_test, y_train, y_test = cargar_y_preprocesar_datos('student-mat.csv')
                                                               
 # Definir models
 models = {

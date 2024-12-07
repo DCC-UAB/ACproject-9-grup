@@ -1,0 +1,54 @@
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
+
+# Cargar datos
+filepath = 'student-mat.csv' 
+df = pd.read_csv(filepath)
+
+# Limpiar valores no deseados en columnas categóricas
+for col in df.columns:
+    if df[col].dtype == 'object':
+        df[col] = df[col].str.replace("'", "").str.strip()
+
+# Convertir variables categóricas a numéricas
+categorical_cols = df.select_dtypes(include=['object']).columns
+for col in categorical_cols:
+    df[col] = LabelEncoder().fit_transform(df[col])
+
+print(df.head())  # Verifica que se hayan cargado correctamente
+
+# Crear variables nuevas
+df['fracassos_per_absència'] = df['failures'] / (df['absences'] + 1)  # Evitar división por cero
+df['sortides_per_temps'] = df['goout'] / (df['freetime'] + 1)
+df['es_femella'] = (df['sex'] == 'F').astype(int)  # Sexo binarizado
+df['alt_fracassos'] = (df['failures'] > 0).astype(int)
+df['alt_absències'] = (df['absences'] > 10).astype(int)
+df['salut_per_temps'] = df['health'] * df['freetime']
+df['log_absències'] = np.log1p(df['absences'])  # Logaritmo de absencias para normalizar
+
+# Analizar impacto del sexo en la nota final
+impacto_sex = df.groupby('sex')['G3'].mean()
+print(impacto_sex)
+
+# Analizar otras variables clave relacionadas con la nota final
+variables_clave = ['es_femella', 'absences', 'failures', 'goout', 'health', 'freetime', 'G3']
+key_analysis = df[variables_clave].groupby('es_femella').mean()
+print(key_analysis)
+
+import matplotlib.pyplot as plt
+
+# Matriz de correlación
+correlation_matrix = df.corr()
+
+# Visualizar matriz de correlación
+plt.figure(figsize=(12, 8))
+plt.matshow(correlation_matrix, fignum=1, cmap='coolwarm')
+plt.colorbar()
+plt.title("Matriz de Correlación", pad=20)
+plt.xticks(range(len(correlation_matrix.columns)), correlation_matrix.columns, rotation=90)
+plt.yticks(range(len(correlation_matrix.columns)), correlation_matrix.columns)
+plt.show()
+
+
+print(df.head())  # Verifica que se hayan creado las nuevas columnas
