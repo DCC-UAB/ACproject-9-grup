@@ -1,0 +1,4 @@
+Els valors a predir son discrets i no podem aplicar regressió, per això ens hem decidit a realtizar classificació, els valors de les dades son: 1, 2, 3, 4 o 5. El problema és que no es pot calcular la difència d'error en diferentes classes. Per tal de poder fer classificació binària es podria canviar aquesta valor amb 0 i 1, és a dir, per exemple les dades amb valor 1 i 2 les indiquem amb 0, i les dades amb 3, 4 i 5 amb 1. Llavors la classificació seria respecte el 0 i el 1.
+Per tal de tenir en compte les diferents distàncies entre classes a l'hora de calcular l'error, podem crear un pròpia forma de càlcul d'errors?
+Podem utilitzar el model XGBoost per tal de poder posar pesos a cada classe?
+
