@@ -1,11 +1,51 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.preprocessing import PowerTransformer,StandardScaler, LabelEncoder
+import numpy as np
+
 
 # Cargar el archivo CSV
 file_path = 'student-mat.csv'
 df = pd.read_csv(file_path)
+
+
+    # Netejar valors no desitjats
+for col in df.columns:
+        if df[col].dtype == 'object':
+            df[col] = df[col].str.replace("'", "").str.strip()
+
+    # Renombrar columnes per simplicitat
+df.rename(columns={
+        'absences': 'absències',
+        'failures': 'fracassos',
+        'goout': 'sortides',
+        'freetime': 'temps',
+        'age': 'edat',
+        'health': 'salut',
+        'G3': 'nota'
+    }, inplace=True)
+
+    # Mapatge per valors binaris
+bin_map = {
+        'yes': 1, 'no': 0,
+        'GP': 1, 'MS': 0,
+        'F': 1, 'M': 0,
+        'U': 1, 'R': 0,
+        'LE3': 0, 'GT3': 1,
+        'T': 1, 'A': 0
+    }
+
+cat_cols = ['school', 'sex', 'address', 'famsize', 'Pstatus', 'Mjob', 'Fjob', 'reason', 'guardian',
+                'schoolsup', 'famsup', 'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic']
+
+    # Codificar columnes categòriques
+for col in cat_cols:
+        if df[col].dtype == 'object':
+            if set(df[col].unique()).issubset(bin_map.keys()):
+                df[col] = df[col].map(bin_map)
+            else:
+                df[col] = LabelEncoder().fit_transform(df[col])
 
 # Identificar columnas numéricas
 numeric_cols = df.select_dtypes(include=[np.number]).columns
@@ -45,14 +85,11 @@ plt.tight_layout()
 plt.show()
 
 
-from sklearn.preprocessing import PowerTransformer
-import numpy as np
-
 # Identificar columnas relevantes para transformación
-outlier_cols = ['absences', 'failures', 'studytime', 'famrel', 'Dalc', 'Walc']
+outlier_cols = ['absències', 'fracassos', 'studytime', 'famrel', 'Dalc', 'Walc']
 
 # Transformación logarítmica para columnas específicas
-log_transform_vars = ['absences', 'Dalc', 'Walc']
+log_transform_vars = ['absències', 'Dalc', 'Walc']
 for col in log_transform_vars:
     df[col] = np.log1p(df[col])  # log1p para manejar ceros
 

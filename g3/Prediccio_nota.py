@@ -58,7 +58,7 @@ def cargar_y_preprocesar_datos(filepath):
             else:
                 df[col] = LabelEncoder().fit_transform(df[col])
 
-        # Identificar columnas relevantes para transformación
+    # Identificar columnas relevantes para transformación
     outlier_cols = ['absències', 'fracassos', 'studytime', 'famrel', 'Dalc', 'Walc']
 
     # Transformación logarítmica para columnas específicas
@@ -69,18 +69,12 @@ def cargar_y_preprocesar_datos(filepath):
     # Clip de valores extremos para otras columnas
     clip_transform_vars = [col for col in outlier_cols if col not in log_transform_vars]
     for col in clip_transform_vars:
-        Q1 = df[col].quantile(0.25)
-        Q3 = df[col].quantile(0.75)
+        Q1 = df[col].quantile(0.15)
+        Q3 = df[col].quantile(0.85)
         IQR = Q3 - Q1
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
         df[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
-
-    # Normalización Yeo-Johnson para todo el conjunto de datos numérico
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-    power_transformer = PowerTransformer(method='yeo-johnson', standardize=True)
-    df[numeric_cols] = power_transformer.fit_transform(df[numeric_cols])
-
 
     # Separar variables (X: predictives, y: objectiu)
     X = df.drop('nota', axis=1)
@@ -179,7 +173,7 @@ plt.tight_layout()
 plt.show()
 
 # Visualización de predicciones vs valores reales
-plt.scatter(y_test, y_pred, alpha=0.7)
+plt.scatter(y_test, y_pred, alpha=0.85)
 plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--')  # Línea ideal
 plt.xlabel("Actual Values")
 plt.ylabel("Predicted Values")
