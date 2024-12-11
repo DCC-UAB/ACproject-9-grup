@@ -308,4 +308,5 @@ sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(Y), yti
 plt.xlabel('Classe Predicha')
 plt.ylabel('Classe Real')
 plt.title('Matriu de Confusió')
-plt.show() 
+plt.show()
+
