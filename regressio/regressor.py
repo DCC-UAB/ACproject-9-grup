@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_predict, cross_validate
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error, precision_score, recall_score, f1_score, confusion_matrix
 import numpy as np
@@ -22,62 +22,50 @@ def assign_class(y_pred):
     else:
         return 5
 
-
 # Model de regressió lineal
 model = LinearRegression()
 
+kf = 5  # Nombre de folds
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-model.fit(X_train, y_train)
+# Validació creuada i càlcul de les mètriques MSE i MAE
+cv_results = cross_validate(model, X, y, cv=kf, scoring=None, return_train_score=False)
 
-train_predict = model.predict(X_train)
-y_pred = model.predict(X_test)
+# Prediccions per a la validació creuada
+y_pred = cross_val_predict(model, X, y, cv=kf)
 
-print("Metriques regressor:")
+# Calcula el MSE i MAE per cada fold de la validació creuada
+mse_scores = []
+mae_scores = []
 
-#Error
-train_predict = model.predict(X_train)
+for i in range(kf):
+    start_idx = i * (len(y) // kf)
+    end_idx = (i + 1) * (len(y) // kf)
+    fold_y_true = y.iloc[start_idx:end_idx]
+    fold_y_pred = y_pred[start_idx:end_idx]
+    
+    mse_scores.append(float(mean_squared_error(fold_y_true, fold_y_pred)))  # Convertir a float
+    mae_scores.append(float(mean_absolute_error(fold_y_true, fold_y_pred)))  # Convertir a float
 
-train_error = (y_train-train_predict).values
-test_error = (y_test-y_pred).values
-
-
-plt.plot(train_error, '.')
-plt.plot(test_error, '.r')
-
-plt.axhline(y=np.mean(train_error), color='b', linestyle='-', label='Mean train error')
-plt.axhline(y=np.std(train_error), color='b', linestyle='--', label='Std train error')
-
-plt.axhline(y=np.mean(test_error), color='r', linestyle='-', label='Mean test error')
-plt.axhline(y=np.std(test_error), color='r', linestyle='--', label='Std test error')
-plt.title("Train vs Test")
-plt.xlabel("Instàncies de prediccions")
-plt.ylabel("Error")
-plt.legend()
-
-#Errors normalitzats histograma
-plt.figure()
-plt.hist(train_error, density = True, histtype = 'step', label = "Train")
-plt.hist(test_error,density = True, histtype = 'step', label = "Test")
-plt.title("Histograma errors normalitzats Train vs Test")
-plt.xlabel('Error')
-plt.ylabel('Densitat')
-plt.legend()
+# Mostrar els resultats
+print(f"MSE scores for each fold: {mse_scores}")
+print(f"Average MSE: {np.mean(mse_scores)}")
+print(f"MAE scores for each fold: {mae_scores}")
+print(f"Average MAE: {np.mean(mae_scores)}")
 
 
-# Calcula MSE i MAE per al conjunt de train
-train_mse = mean_squared_error(y_train, train_predict)
-train_mae = mean_absolute_error(y_train, train_predict)
+# Crear gràfica per visualitzar les mètriques MSE i MAE
+fig, ax = plt.subplots(figsize=(8, 6))
 
-# Calcula MSE i MAE per al conjunt de test
-test_mse = mean_squared_error(y_test, y_pred)
-test_mae = mean_absolute_error(y_test, y_pred)
+# Mostrar MSE i MAE
+ax.bar(np.arange(kf) - 0.2, mse_scores, 0.4, label='MSE')
+ax.bar(np.arange(kf) + 0.2, mae_scores, 0.4, label='MAE')
 
-# Mostra els resultats
-print("MSE Train:", train_mse)
-print("MAE Train:", train_mae)
-print("MSE Test:", test_mse)
-print("MAE Test:", test_mae)
+# Afegir títol i etiquetes
+ax.set_title('MSE i MAE per Fold (Cross-Validation)')
+ax.set_xlabel('Fold')
+ax.set_ylabel('Valor')
+ax.legend()
+
 
 
 #CLASSIFIQUEM ELS VALORS PREDITS-----------------------------------------------------------------
@@ -85,17 +73,17 @@ print("MAE Test:", test_mae)
 y_pred_classes = np.array([assign_class(val) for val in y_pred])
 
 # Calculant la matriu de confusió
-conf_matrix = confusion_matrix(y_test, y_pred_classes)
+conf_matrix = confusion_matrix(y, y_pred_classes)
 print("\nMètriques valors classificats:")
 # Mostrar la matriu de confusió
 print("Matriu de confusio:")
 print(conf_matrix)
 
 # Càlcul de mètriques
-accuracy = accuracy_score(y_test, y_pred_classes)
-precision = precision_score(y_test, y_pred_classes, average='weighted')  # 'weighted' pondera les mètriques per la seva freqüència
-recall = recall_score(y_test, y_pred_classes, average='weighted')
-f1 = f1_score(y_test, y_pred_classes, average='weighted')
+accuracy = accuracy_score(y, y_pred_classes)
+precision = precision_score(y, y_pred_classes, average='weighted')  # 'weighted' pondera les mètriques per la seva freqüència
+recall = recall_score(y, y_pred_classes, average='weighted')
+f1 = f1_score(y, y_pred_classes, average='weighted')
 
 print(f"Accuracy: {accuracy:.4f}")
 print(f"Precision (weighted): {precision:.4f}")

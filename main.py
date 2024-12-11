@@ -56,7 +56,7 @@ def executar_regressor():
 
 def executar_random_forest():
     print("[Execució del model Random Forest]")
-    script_path = os.path.join("randomforest", "randomforest_classificador.py")
+    script_path = os.path.join("randomforest", "randomforest_regressor.py")
     subprocess.run(["python", script_path])
 
 def executar_notes_estudiants():

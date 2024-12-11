@@ -7,7 +7,7 @@ data = pd.read_csv("student-mat.csv")
 cols = ['school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu', 
         'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup',
         'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic', 'famrel', 
-        'freetime', 'goout', 'Walc', 'health', 'absences', 'G1', 'G2', 'G3']
+        'freetime', 'goout', 'Dalc', 'health', 'absences', 'G1', 'G2', 'G3', 'Walc']
 
 data = data[cols]
 
