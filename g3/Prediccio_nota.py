@@ -69,8 +69,8 @@ def cargar_y_preprocesar_datos(filepath):
     # Clip de valores extremos para otras columnas
     clip_transform_vars = [col for col in outlier_cols if col not in log_transform_vars]
     for col in clip_transform_vars:
-        Q1 = df[col].quantile(0.15)
-        Q3 = df[col].quantile(0.85)
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
         IQR = Q3 - Q1
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
