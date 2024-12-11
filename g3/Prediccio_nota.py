@@ -12,7 +12,6 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from imblearn.over_sampling import SMOTE
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.preprocessing import PowerTransformer
 
 # Semilla
 SEED = 1
