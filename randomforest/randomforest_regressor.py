@@ -11,47 +11,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-
-# Llegir el fitxer CSV
-df = pd.read_csv("student-mat.csv")
-
-# Filtratge de columnes
-cols = ['school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu', 
-        'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup',
-        'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic', 'famrel', 
-        'freetime', 'goout', 'Dalc', 'health', 'absences', 'G1', 'G2', 'G3', 'Walc']
-df = df[cols]
-
-# Mapeig de les columnes categòriques
-mapping = {
-    'address': {'U': 0, 'R': 1},
-    'famsize': {'LE3': 0, 'GT3': 1},
-    'Pstatus': {'T': 0, 'A': 1},
-    'schoolsup': {'no': 0, 'yes': 1},
-    'famsup': {'no': 0, 'yes': 1},
-    'paid': {'no': 0, 'yes': 1},
-    'activities': {'no': 0, 'yes': 1},
-    'internet': {'no': 0, 'yes': 1},
-    'romantic': {'no': 0, 'yes': 1},
-    'school': {'GP': 0, 'MS': 1},
-    'sex': {'M': 0, 'F': 1},
-    'higher': {'no': 0, 'yes': 1},
-    'nursery': {'no': 0, 'yes': 1}
-}
-
-# Aplicar el mapeig
-for column in mapping:
-    df[column] = df[column].map(mapping[column])
-    
-df['G1'] = df['G1'].str.replace("'", "").astype(float).astype(int)    
-
-
-# Separar les característiques (X) i l'etiqueta (Y)
-X = df.drop(columns=['Walc'])
-Y = df['Walc']
+# Carregar dades preprocessades
+X = pd.read_csv("X_preprocessed.csv")
+y = pd.read_csv("y_preprocessed.csv")
 
 # Dividir en conjunt de train i test
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Normalitzar les dades
 scaler = StandardScaler()
@@ -106,7 +71,7 @@ print(classification_report(Y_test, y_pred))
 # Matriu de confusió
 cm = confusion_matrix(Y_test, y_pred)
 plt.figure(figsize=(8, 6))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(Y), yticklabels=np.unique(Y))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(y), yticklabels=np.unique(y))
 plt.xlabel('Classe Predicha')
 plt.ylabel('Classe Real')
 plt.title('Matriu de Confusió')
