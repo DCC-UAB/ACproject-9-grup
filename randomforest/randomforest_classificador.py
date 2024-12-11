@@ -12,7 +12,7 @@ X = pd.read_csv("X_preprocessed.csv")
 y = pd.read_csv("y_preprocessed.csv")
 
 # Dividir en conjunt de train i test
-X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=Y)
+X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
 # Aplicar SMOTE per a l'oversampling de les classes minoritàries
 smote = SMOTE(sampling_strategy='all', random_state=42)
@@ -58,7 +58,7 @@ print(classification_report(Y_test, y_pred))
 # Matriu de confusió
 cm = confusion_matrix(Y_test, y_pred)
 plt.figure(figsize=(8, 6))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(Y), yticklabels=np.unique(Y))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(y), yticklabels=np.unique(y))
 plt.xlabel('Classe Predicha')
 plt.ylabel('Classe Real')
 plt.title('Matriu de Confusió')
