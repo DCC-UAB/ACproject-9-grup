@@ -10,14 +10,14 @@ def main():
 
         try:
             opcio = int(input("\nTria una opció (1-3): "))
-            if opcio == 1 or opcio == 2:
+            if opcio == 1:
+                print("Has triat el model d'alcoholisme.")
                 print("Preparant dataset...")
                 subprocess.run(["python", "preprocessament.py"])
-                if opcio == 1:
-                    print("Has triat el model d'alcoholisme.")
-                    executar_model_alcoholisme()
-                else:
-                    print("Has triat el model notes d'estudiants.")
+                executar_model_alcoholisme()  
+            elif opcio == 2:
+                print("Has triat el model notes d'estudiants.")
+                executar_notes_estudiants()
             elif opcio == 3:
                 print("Sortint del programa. Adéu!")
                 break
@@ -60,7 +60,7 @@ def executar_random_forest():
     subprocess.run(["python", script_path])
 
 def executar_notes_estudiants():
-    print("[Execució del model de les notes d'estudiants")
+    print("[Execució del model de les notes d'estudiants]")
     script_path = os.path.join("g3", "prediccio_nota.py")
     subprocess.run(["python", script_path])
 

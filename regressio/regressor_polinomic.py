@@ -1,12 +1,16 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error, confusion_matrix, classification_report
+from sklearn.metrics import mean_absolute_error, mean_squared_error, confusion_matrix, classification_report
 from sklearn.preprocessing import PolynomialFeatures
 from imblearn.over_sampling import SMOTE
 import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+
+# Carregar dades preprocessades
+X = pd.read_csv("X_preprocessed.csv")
+y = pd.read_csv("y_preprocessed.csv")
 
 # Funció per classificar els diferents valors predits pel regressor
 def assign_class(y_pred):
@@ -21,44 +25,6 @@ def assign_class(y_pred):
     else:
         return 5
 
-# Llegir el fitxer CSV
-data = pd.read_csv("student-mat.csv")
-
-# Filtratge de les columnes
-cols = ['school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu', 
-        'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup',
-        'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic', 'famrel', 
-        'freetime', 'goout', 'Walc', 'health', 'absences', 'G1', 'G2', 'G3']
-
-data = data[cols]
-
-# Comprovar valors nuls
-print("Valors nulls?", data.isna().any().any())
-
-# Mapeig de variables categòriques
-mapping = {'school': {'GP': 0, 'MS': 1},
-           'sex': {'F': 0, 'M': 1},
-           'address': {'U': 0, 'R': 1},
-           'famsize': {'LE3': 0, 'GT3': 1},
-           'Pstatus': {'T': 0, 'A': 1},
-           'schoolsup': {'no': 0, 'yes': 1},
-           'famsup': {'no': 0, 'yes': 1},
-           'paid': {'no': 0, 'yes': 1},
-           'activities': {'no': 0, 'yes': 1},
-           'nursery': {'no': 0, 'yes': 1},
-           'higher': {'no': 0, 'yes': 1},
-           'internet': {'no': 0, 'yes': 1},
-           'romantic': {'no': 0, 'yes': 1}}
-
-for column in mapping.keys():
-    data[column] = data[column].map(mapping[column])
-
-data['G1'] = data['G1'].str.replace("'", "").astype(float).astype(int)
-
-# Dividir dades en X i y
-X = data.drop(columns=["Walc"])
-y = data["Walc"]
-
 # Dividir en conjunt d'entrenament i test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -67,7 +33,7 @@ smote = SMOTE(random_state=42)
 X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
 
 print("Distribució de classes després de SMOTE:")
-print(pd.Series(y_train_balanced).value_counts())
+print(pd.Series(y_train_balanced.to_numpy().ravel()).value_counts())
 
 # Crear el pipeline per a la cerca de hiperparàmetres
 pipeline = Pipeline([
@@ -103,14 +69,17 @@ y_test_pred_class = [assign_class(pred) for pred in y_test_pred]
 # Calcular MSE per entrenament i test
 mse_train = mean_squared_error(y_train_balanced, y_train_pred)
 mse_test = mean_squared_error(y_test, y_test_pred)
+mae_train = mean_absolute_error(y_train_balanced, y_train_pred)
+mae_test = mean_absolute_error(y_test, y_test_pred)
 
-# Matriz de confusió i mètriques
+# Matriu de confusió i mètriques
 print(f"\nMSE entrenament: {mse_train:.4f}, MSE test: {mse_test:.4f}")
+print(f"\nMAE entrenament: {mae_train:.4f}, MSE test: {mae_test:.4f}")
 
-# Mostrar la Matriz de Confusió
-print("Matriz de Confusió (Train):")
+# Mostrar la Matriu de Confusió
+print("Matriu de Confusió (Train):")
 print(confusion_matrix(y_train_balanced, y_train_pred_class))
-print("Matriz de Confusió (Test):")
+print("Matriu de Confusió (Test):")
 print(confusion_matrix(y_test, y_test_pred_class))
     
 # Mostrar mètriques de precision, recall i f1-score
@@ -119,15 +88,6 @@ print(classification_report(y_train_balanced, y_train_pred_class))
 print("Mètriques de classificació (Test):")
 print(classification_report(y_test, y_test_pred_class))
 
-# Visualitzar els resultats
-plt.figure(figsize=(10, 6))
-plt.scatter(y_test, y_test_pred, color='blue', alpha=0.6, label='Prediccions')
-plt.plot([y.min(), y.max()], [y.min(), y.max()], color='red', linestyle='--', label='Línia ideal')
-plt.title("Prediccions vs Valors Reals (Regressió Ridge amb GridSearch)")
-plt.xlabel("Valors Reals")
-plt.ylabel("Prediccions")
-plt.legend()
-plt.grid(True)
-plt.show()
+
 
 
