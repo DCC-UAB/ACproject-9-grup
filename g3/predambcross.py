@@ -36,26 +36,10 @@ df.rename(columns={
     'G3': 'nota'
 }, inplace=True)
 
-# Mapatge per valors binaris
-bin_map = {
-    'yes': 1, 'no': 0,
-    'GP': 1, 'MS': 0,
-    'F': 1, 'M': 0,
-    'U': 1, 'R': 0,
-    'LE3': 0, 'GT3': 1,
-    'T': 1, 'A': 0
-}
-
-cat_cols = ['school', 'sex', 'address', 'famsize', 'Pstatus', 'Mjob', 'Fjob', 'reason', 'guardian',
-            'schoolsup', 'famsup', 'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic']
-
-# Codificar columnes categòriques
-for col in cat_cols:
+# Netejar valors no desitjats
+for col in df.columns:
     if df[col].dtype == 'object':
-        if set(df[col].unique()).issubset(bin_map.keys()):
-            df[col] = df[col].map(bin_map)
-        else:
-            df[col] = LabelEncoder().fit_transform(df[col])
+        df[col] = df[col].str.replace("'", "").str.strip()
 
 # Identificar columnas relevantes para transformación
 outlier_cols = ['absències', 'fracassos', 'studytime', 'famrel', 'Dalc', 'Walc']
