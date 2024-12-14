@@ -104,3 +104,4 @@ plt.xlabel('Classe Predita')
 plt.ylabel('Classe Real')
 plt.title('Matriu de Confusió Test')
 plt.show()
+

@@ -1,19 +1,19 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix, classification_report, mean_absolute_error
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 from collections import Counter
-from imblearn.over_sampling import SMOTE
 
 # Carregar dades preprocessades
 X = pd.read_csv("X_preprocessed.csv")
 y = pd.read_csv("y_preprocessed.csv")
 
+# Assegurar que y és una sèrie de pandas
+y = pd.Series(y.values.flatten(), name="target")  # Assegurar que és una sola columna i és una sèrie
 
 def assign_class(y_pred):
     if y_pred <= 1.5:
@@ -36,8 +36,15 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 # Comprovar distribució inicial de classes
-smote = SMOTE(random_state=42, k_neighbors=5)  # Ajustar k_neighbors segons la distribució
-X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
+print("Distribució inicial de les classes:", Counter(Y_train))
+
+# Pesos de les classes (proporcionats)
+class_weights = {2: 0.943, 1: 0.549, 4: 1.505, 3: 0.929, 5: 2.633}
+print("Pesos de les classes utilitzats:", class_weights)
+
+# Convertir Y_train en una sèrie (si no ho és ja) i calcular els pesos de les mostres
+Y_train = pd.Series(Y_train)
+sample_weights = Y_train.map(class_weights).values
 
 # Crear el model Random Forest Regressor amb els hiperparàmetres proporcionats
 best_params = {
@@ -50,8 +57,8 @@ best_params = {
 }
 best_model = RandomForestRegressor(random_state=42, **best_params)
 
-# Entrenar el model amb el conjunt de train
-best_model.fit(X_train, Y_train)
+# Entrenar el model amb el conjunt de train i els pesos de les mostres
+best_model.fit(X_train, Y_train, sample_weight=sample_weights)
 
 # Prediccions amb el model entrenat
 y_train_pred = best_model.predict(X_train)
@@ -99,3 +106,4 @@ plt.xlabel('Classe Predita')
 plt.ylabel('Classe Real')
 plt.title('Matriu de Confusió Test')
 plt.show()
+
