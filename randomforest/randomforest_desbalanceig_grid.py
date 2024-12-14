@@ -11,8 +11,8 @@ from collections import Counter
 
 
 # Carregar dades preprocessades
-X = pd.read_csv("X_preprocessed.csv")
-y = pd.read_csv("y_preprocessed.csv")
+X = pd.read_csv("X123_preprocessed.csv")
+y = pd.read_csv("y123_preprocessed.csv")
 
 def assign_class(y_pred):
     if y_pred <= 1.5:
