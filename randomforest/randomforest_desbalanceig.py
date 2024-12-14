@@ -11,8 +11,8 @@ from collections import Counter
 from imblearn.over_sampling import SMOTE
 
 # Carregar dades preprocessades
-X = pd.read_csv("X_preprocessed.csv")
-y = pd.read_csv("y_preprocessed.csv")
+X = pd.read_csv("X123_preprocessed.csv")
+y = pd.read_csv("y123_preprocessed.csv")
 
 
 def assign_class(y_pred):
@@ -41,12 +41,12 @@ X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
 
 # Crear el model Random Forest Regressor amb els hiperparàmetres proporcionats
 best_params = {
-    'bootstrap': True,
+    'bootstrap': False,
     'max_depth': 10,
-    'max_features': 'auto',
-    'min_samples_leaf': 2,
+    'max_features': 'log2',
+    'min_samples_leaf': 1,
     'min_samples_split': 2,
-    'n_estimators': 200
+    'n_estimators': 100
 }
 best_model = RandomForestRegressor(random_state=42, **best_params)
 

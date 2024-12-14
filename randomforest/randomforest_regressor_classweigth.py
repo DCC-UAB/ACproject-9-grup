@@ -50,7 +50,7 @@ sample_weights = Y_train.map(class_weights).values
 best_params = {
     'bootstrap': True,
     'max_depth': 10,
-    'max_features': 'auto',
+    'max_features': 'sqrt',
     'min_samples_leaf': 2,
     'min_samples_split': 2,
     'n_estimators': 200
