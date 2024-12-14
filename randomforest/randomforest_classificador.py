@@ -6,6 +6,7 @@ from sklearn.metrics import classification_report, accuracy_score, confusion_mat
 from imblearn.over_sampling import SMOTE
 import seaborn as sns
 import matplotlib.pyplot as plt
+from collections import Counter
 
 # Carregar dades preprocessades
 X = pd.read_csv("X_preprocessed.csv")
@@ -14,9 +15,15 @@ y = pd.read_csv("y_preprocessed.csv")
 # Dividir en conjunt de train i test
 X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-# Aplicar SMOTE per a l'oversampling de les classes minoritàries
-smote = SMOTE(sampling_strategy='all', random_state=42)
+# Comprovar distribució inicial de classes
+print("Distribució inicial de les classes:", Counter(Y_train))
+
+# Balancejar les dades utilitzant SMOTE
+smote = SMOTE(random_state=42, k_neighbors=5)  # Ajustar k_neighbors segons la distribució
 X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
+
+# Comprovar distribució després de balancejar
+print("Distribució després de SMOTE:", Counter(Y_train_res))
 
 # Crear el model Random Forest amb els millors hiperparàmetres trobats
 best_params = {
