@@ -54,7 +54,7 @@ model.fit(X_train_res, Y_train_res)
 # Fer les prediccions sobre el conjunt de test
 y_pred = model.predict(X_test)
 
-# Mostrar l'accuracy en el conjunt de test
+# Calcular l'accuracy en el conjunt de test
 test_accuracy = accuracy_score(Y_test, y_pred)
 print(f"\nAccuracy en el conjunt de test: {test_accuracy:.4f}")
 
@@ -63,11 +63,18 @@ print("\nClassification Report:")
 print(classification_report(Y_test, y_pred))
 
 # Matriu de confusió
-cm = confusion_matrix(Y_test, y_pred)
-plt.figure(figsize=(8, 6))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(y), yticklabels=np.unique(y))
-plt.xlabel('Classe Predicha')
-plt.ylabel('Classe Real')
-plt.title('Matriu de Confusió')
-plt.show()
+cm_test = confusion_matrix(Y_test, y_pred)
+# Percentatges
+cm_percentage_test = cm_test.astype('float') / cm_test.sum(axis=1)[:, np.newaxis] * 100
 
+# Crear el text combinat (freqüència + percentatge)
+labels = np.array([[f"{int(val)}\n({pct:.1f}%)" 
+                    for val, pct in zip(row, pct_row)] 
+                   for row, pct_row in zip(cm_test, cm_percentage_test)])
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm_test, annot=labels, fmt='', cmap='Blues', xticklabels=np.unique(y), yticklabels=np.unique(y))
+plt.xlabel('Classe Predita')
+plt.ylabel('Classe Real')
+plt.title('Matriu de Confusió Test')
+plt.show()
