@@ -12,8 +12,8 @@ import seaborn as sns
 
 
 # Carregar dades preprocessades
-X = pd.read_csv("X_preprocessed.csv")
-y = pd.read_csv("y_preprocessed.csv")
+X = pd.read_csv("X123_preprocessed.csv")
+y = pd.read_csv("y123_preprocessed.csv")
 y = y['Walc']
 
 # Dividir en conjunt de train i test
@@ -36,10 +36,11 @@ print("Distribució després de SMOTE:", Counter(Y_train_res))
 
 best_params = {
     'bootstrap': True,
+    'class_weight': 'balanced',
     'max_depth': 10,
     'max_features': 'sqrt',
     'min_samples_leaf': 2,
-    'min_samples_split': 2,
+    'min_samples_split': 10,
     'n_estimators': 200
 }
 
@@ -88,7 +89,7 @@ plt.show()
 
 
 # Avaluar el model
-mae = mean_absolute_error(Y_test, y_pred)
+mae = mean_squared_error(Y_test, y_pred)
 r2 = r2_score(Y_test, y_pred)
 print(f"MAE en el conjunt de test: {mae:.4f}")
 print(f"R2 en el conjunt de test: {r2:.4f}")
