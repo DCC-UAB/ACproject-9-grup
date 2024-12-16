@@ -6,17 +6,17 @@ import matplotlib.pyplot as plt
 # Llegir el fitxer CSV
 data = pd.read_csv("student-mat.csv")
 
+# Comptar els valors de Walc
 walc_counts = data['Walc'].value_counts().sort_index()
 
-print(walc_counts)
-
-
 # Configuració del gràfic
-plt.figure()
+plt.figure(figsize=(8, 6))
 ax = sns.countplot(x=data['Walc'], palette='magma')
 
-# Afegir etiquetes a les barres
-ax.bar_label(ax.containers[0], fmt='%d', fontsize=10, padding=5)
+# Afegir etiquetes a les barres amb els valors exactes
+for container in ax.containers:
+    ax.bar_label(container, fmt='%d', fontsize=10, padding=5)
+
 # Ajustos visuals
 ax.set_title('Distribution of Weekend Alcohol Consumption (Walc)', fontsize=16, fontweight='bold', pad=20)
 ax.set_xlabel('Weekend Alcohol Consumption (1=Low, 5=High)', fontsize=12)

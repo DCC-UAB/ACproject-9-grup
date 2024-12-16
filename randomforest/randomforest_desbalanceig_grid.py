@@ -11,8 +11,9 @@ from collections import Counter
 
 
 # Carregar dades preprocessades
-X = pd.read_csv("X123_preprocessed.csv")
-y = pd.read_csv("y123_preprocessed.csv")
+X = pd.read_csv("X_preprocessed.csv")
+y = pd.read_csv("y_preprocessed.csv")
+y = y['Walc']
 
 def assign_class(y_pred):
     if y_pred <= 1.5:
@@ -34,24 +35,21 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# Comprovar distribució inicial de classes
-print("Distribució inicial de les classes:", Counter(Y_train))
-
 # Definir el model inicial de Random Forest Regressor
 rf = RandomForestRegressor(random_state=42)
 
 # Definir el conjunt de paràmetres per a GridSearchCV
 param_grid = {
-    'n_estimators': [100, 200, 300],
-    'max_depth': [10, 20, None],
-    'min_samples_split': [2, 5, 10],
+    'n_estimators': [50, 100, 200, 300],
+    'max_depth': [5, 10, 20, None],
+    'min_samples_split': [1,2, 5, 10],
     'min_samples_leaf': [1, 2, 4],
     'max_features': ['auto', 'sqrt', 'log2'],
     'bootstrap': [True, False]
 }
 
 # Realitzar la cerca de hiperparàmetres
-grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, scoring='neg_mean_absolute_error', n_jobs=-1, verbose=2)
+grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, scoring='neg_mean_squared_error', n_jobs=-1, verbose=2)
 
 # Entrenar el model amb GridSearchCV
 grid_search.fit(X_train, Y_train)

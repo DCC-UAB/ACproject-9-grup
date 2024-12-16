@@ -49,11 +49,11 @@ sample_weights = Y_train.map(class_weights).values
 # Crear el model Random Forest Regressor amb els hiperparàmetres proporcionats
 best_params = {
     'bootstrap': True,
-    'max_depth': 10,
+    'max_depth': 20,
     'max_features': 'sqrt',
     'min_samples_leaf': 2,
     'min_samples_split': 2,
-    'n_estimators': 200
+    'n_estimators': 50
 }
 best_model = RandomForestRegressor(random_state=42, **best_params)
 
