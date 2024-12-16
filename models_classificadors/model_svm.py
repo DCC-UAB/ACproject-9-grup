@@ -7,6 +7,7 @@ from imblearn.over_sampling import SMOTE
 import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import Counter
+from roc_curve import plot_roc_curve
 
 # Carregar dades preprocessades
 X = pd.read_csv("Xbinari_preprocessed.csv")
@@ -75,5 +76,7 @@ plt.figure(figsize=(8, 6))
 sns.heatmap(cm_test, annot=labels, fmt='', cmap='Blues', xticklabels=np.unique(y), yticklabels=np.unique(y))
 plt.xlabel('Classe Predita')
 plt.ylabel('Classe Real')
-plt.title('Matriu de Confusió Test')
+plt.title('Matriu de Confusió - SVM')
 plt.show()
+
+roc_curve = plot_roc_curve(model, X_test, Y_test, "SVM")

@@ -7,6 +7,7 @@ from imblearn.over_sampling import SMOTE
 import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import Counter
+from roc_curve import plot_roc_curve
 
 # Carregar dades preprocessades
 X = pd.read_csv("Xbinari_preprocessed.csv")
@@ -78,3 +79,5 @@ plt.xlabel('Classe Predita')
 plt.ylabel('Classe Real')
 plt.title('Matriu de Confusió Test')
 plt.show()
+
+roc_curve = plot_roc_curve(model, X_test, Y_test, "Random Forest")
