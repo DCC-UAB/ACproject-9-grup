@@ -37,7 +37,7 @@ pipeline = Pipeline([
 
 # Definir els valors per fer la cerca en graella (Grid Search)
 param_grid = {
-    'poly__degree': [2, 3, 4, 5],  # Graus del polinomi
+    'poly__degree': [2, 3, 4, 5]  # Graus del polinomi
 
 }
 

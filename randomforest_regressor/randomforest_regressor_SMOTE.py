@@ -12,8 +12,8 @@ import seaborn as sns
 
 
 # Carregar dades preprocessades
-X = pd.read_csv("X123_preprocessed.csv")
-y = pd.read_csv("y123_preprocessed.csv")
+X = pd.read_csv("Xbinari_preprocessed.csv")
+y = pd.read_csv("ybinari_preprocessed.csv")
 y = y['Walc']
 
 # Dividir en conjunt de train i test
@@ -35,17 +35,17 @@ X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
 print("Distribució després de SMOTE:", Counter(Y_train_res))
 
 best_params = {
-    'bootstrap': True,
+    'bootstrap': False,
     'class_weight': 'balanced',
     'max_depth': 10,
-    'max_features': 'sqrt',
-    'min_samples_leaf': 2,
+    'max_features': 'log2',
+    'min_samples_leaf': 1,
     'min_samples_split': 10,
-    'n_estimators': 200
+    'n_estimators': 100
 }
 
 # Crear el model Random Forest Regressor
-model = RandomForestRegressor(random_state=42, **best_params)
+model = RandomForestRegressor(random_state=42, n_estimators=100, max_depth=10)
 
 # Realitzar cross-validation per avaluar el model
 cv_scores = cross_val_score(model, X_train_res, Y_train_res, cv=5, scoring='neg_mean_squared_error')
@@ -70,27 +70,16 @@ print("\nClassification Report:")
 print(classification_report(Y_test, y_pred))
 
 # Matriu de confusió
-cm_test = confusion_matrix(Y_test, y_pred)
-# Percentatges
-cm_percentage_test = cm_test.astype('float') / cm_test.sum(axis=1)[:, np.newaxis] * 100
-
-# Crear el text combinat (freqüència + percentatge)
-labels = np.array([[f"{int(val)}\n({pct:.1f}%)" 
-                    for val, pct in zip(row, pct_row)] 
-                   for row, pct_row in zip(cm_test, cm_percentage_test)])
-
+cm = confusion_matrix(Y_test, y_pred)
 plt.figure(figsize=(8, 6))
-sns.heatmap(cm_test, annot=labels, fmt='', cmap='Blues', xticklabels=np.unique(y), yticklabels=np.unique(y))
-plt.xlabel('Classe Predita')
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(y), yticklabels=np.unique(y))
+plt.xlabel('Classe Predicha')
 plt.ylabel('Classe Real')
-plt.title('Matriu de Confusió Test')
+plt.title('Matriu de Confusió')
 plt.show()
-
-
 
 # Avaluar el model
 mae = mean_squared_error(Y_test, y_pred)
 r2 = r2_score(Y_test, y_pred)
 print(f"MAE en el conjunt de test: {mae:.4f}")
 print(f"R2 en el conjunt de test: {r2:.4f}")
-

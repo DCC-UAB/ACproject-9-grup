@@ -7,12 +7,10 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
-from collections import Counter
-from imblearn.over_sampling import SMOTE
 
 # Carregar dades preprocessades
-X = pd.read_csv("X123_preprocessed.csv")
-y = pd.read_csv("y123_preprocessed.csv")
+X = pd.read_csv("X_preprocessed.csv")
+y = pd.read_csv("y_preprocessed.csv")
 
 
 def assign_class(y_pred):
@@ -34,10 +32,6 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
-
-# Comprovar distribució inicial de classes
-smote = SMOTE(random_state=42, k_neighbors=5)  # Ajustar k_neighbors segons la distribució
-X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
 
 # Crear el model Random Forest Regressor amb els hiperparàmetres proporcionats
 best_params = {

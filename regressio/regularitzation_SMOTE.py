@@ -8,7 +8,8 @@ from sklearn.metrics import confusion_matrix, mean_absolute_error, mean_squared_
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
-from imblearn.over_sampling import SMOTE  # Importar SMOTE
+from imblearn.over_sampling import SMOTE 
+from collections import Counter
 
 # Carregar dades preprocessades
 X = pd.read_csv("X_preprocessed.csv")
@@ -36,7 +37,6 @@ smote = SMOTE(random_state=42)
 X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
 
 # Comprovar distribució de classes abans i després de SMOTE
-from collections import Counter
 print("Distribució original de les classes:", Counter(y_train))
 print("Distribució després de SMOTE:", Counter(y_train_res))
 
@@ -59,7 +59,7 @@ for model_name, model in models.items():
     ])
 
     # Crear GridSearchCV per a cada model
-    grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='neg_mean_absolute_error')
+    grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='neg_mean_squared_error')
 
     # Entrenar el model amb GridSearchCV utilitzant les dades balancejades
     grid_search.fit(X_train_res, y_train_res)
