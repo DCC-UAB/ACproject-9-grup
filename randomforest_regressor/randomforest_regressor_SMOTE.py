@@ -12,8 +12,8 @@ import seaborn as sns
 
 
 # Carregar dades preprocessades
-X = pd.read_csv("X123_preprocessed.csv")
-y = pd.read_csv("y123_preprocessed.csv")
+X = pd.read_csv("Xbinari_preprocessed.csv")
+y = pd.read_csv("ybinari_preprocessed.csv")
 y = y['Walc']
 
 # Dividir en conjunt de train i test
